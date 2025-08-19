@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block body %}
+<h2>Sensor: {{ sensor.name }}</h2>
+<p><strong>URL:</strong> {{ sensor.url }}</p>
+<p><strong>Room:</strong> {{ sensor.room.name }}</p>
+<p><strong>Home:</strong> {{ sensor.room.home.name }}</p>
+
+<h3>Graph of {{ property_name }}</h3>
+
+<canvas id="sensorChart" width="800" height="400"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('sensorChart').getContext('2d');
+const sensorChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ measurements|tojson }},
+        datasets: [{
+            label: '{{ property_name }}',
+            data: {{ values|tojson }},
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        scales: {
+            x: {
+                title: { display: true, text: 'Time' }
+            },
+            y: {
+                title: { display: true, text: '{{ property_name }}' }
+            }
+        }
+    }
+});
+</script>
+
+<!-- Optional: allow selecting another property -->
+<form method="get" class="mt-3">
+    <label>Select property:</label>
+    <select name="property" class="form-select w-auto d-inline-block">
+        {% for mt in sensor.measurements[0].values|map(attribute='measurement_type')|list %}
+            <option value="{{ mt.name }}" {% if mt.name == property_name %}selected{% endif %}>{{ mt.name }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn btn-primary btn-sm">Update</button>
+</form>
+
+<a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">Back</a>
+{% endblock %}

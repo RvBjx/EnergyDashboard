@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block body %}
+<h2>Add Room</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label">Room Name</label>
+    <input type="text" class="form-control" name="name" required placeholder="Living Room">
+  </div>
+  <input type="hidden" name="home_id" value="{{ home_id }}">
+  <button type="submit" class="btn btn-primary">Add Room</button>
+  <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
