@@ -93,14 +93,26 @@ def index():
     homes = Home.query.all()
     return render_template('index.html', homes=homes)
 
+@app.route('/settings')
+def settings():
+    homes = Home.query.all()
+    return render_template('settings.html', homes=homes)
+
 @app.route('/home/add', methods=['GET', 'POST'])
 def add_home():
     if request.method == 'POST':
         name = request.form['name']
         db.session.add(Home(name=name))
         db.session.commit()
-        return redirect(url_for('index'))
+        return redirect(url_for('settings'))
     return render_template('add_home.html')
+
+@app.route('/home/<int:home_id>/delete', methods=['GET','POST'])
+def delete_home(home_id):   
+    home = Home.query.get_or_404(home_id)
+    db.session.delete(home)
+    db.session.commit()
+    return redirect(url_for("settings"))
 
 @app.route('/room/add/<int:home_id>', methods=['GET', 'POST'])
 def add_room(home_id):
@@ -108,8 +120,15 @@ def add_room(home_id):
         name = request.form['name']
         db.session.add(Room(name=name, home_id=home_id))
         db.session.commit()
-        return redirect(url_for('index'))
+        return redirect(url_for('settings'))
     return render_template('add_room.html', home_id=home_id)
+
+@app.route('/room/<int:room_id>/delete', methods=['GET','POST'])
+def delete_room(room_id):
+    room = Room.query.get_or_404(room_id)
+    db.session.delete(room)
+    db.session.commit()
+    return redirect(url_for("settings"))
 
 @app.route('/sensor/add/<int:room_id>', methods=['GET', 'POST'])
 def add_sensor(room_id):
@@ -118,8 +137,15 @@ def add_sensor(room_id):
         url = request.form['url']
         db.session.add(Sensor(name=name, url=url, room_id=room_id))
         db.session.commit()
-        return redirect(url_for('index'))
+        return redirect(url_for('settings'))
     return render_template('add_sensor.html', room_id=room_id)
+
+@app.route('/sensor/<int:sensor_id>/delete', methods=['GET','POST'])
+def delete_sensor(sensor_id):
+    sensor = Sensor.query.get_or_404(sensor_id)
+    db.session.delete(sensor)
+    db.session.commit()
+    return redirect(url_for("settings"))
 
 @app.route('/sensor/<int:sensor_id>')
 def sensor_detail(sensor_id):
