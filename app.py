@@ -4,11 +4,14 @@ from flask_migrate import Migrate
 from datetime import datetime
 import requests
 import threading
+import os
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db' # Drei Schrägstriche für den relativen Pfad, vier wären absolut
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
  
 class Home(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -165,6 +168,7 @@ def sensor_detail(sensor_id):
 
 
 if __name__ == '__main__':
-    thread = threading.Thread(target=background_task, args=(60,), daemon=True)  # Daemon-Thread, damit er im Hintergrund läuft und die App nicht blockiert, schliesst automatisch wenn die App geschlossen wird
-    thread.start()  # Startet den Hintergrund-Thread
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':  # Verhindert, dass der Thread zweimal gestartet wird (debug mode)
+        thread = threading.Thread(target=background_task, args=(60,), daemon=True)  # Daemon-Thread, damit er im Hintergrund läuft und die App nicht blockiert, schliesst automatisch wenn die App geschlossen wird
+        thread.start()  # Startet den Hintergrund-Thread
     app.run(debug=True)

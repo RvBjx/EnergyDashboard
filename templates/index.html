@@ -12,11 +12,11 @@
   {% for home in homes %}
     <div class="accordion-item">
       <h2 class="accordion-header" id="headingHome{{ home.id }}">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHome{{ home.id }}" aria-expanded="false" aria-controls="collapseHome{{ home.id }}">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHome{{ home.id }}" aria-expanded="true" aria-controls="collapseHome{{ home.id }}">
           {{ home.name }}
         </button>
       </h2>
-      <div id="collapseHome{{ home.id }}" class="accordion-collapse collapse" aria-labelledby="headingHome{{ home.id }}" data-bs-parent="#homeAccordion">
+      <div id="collapseHome{{ home.id }}" class="accordion-collapse collapse show" aria-labelledby="headingHome{{ home.id }}" data-bs-parent="#homeAccordion">
         <div class="accordion-body">
           <ul class="list-group">
             {% for room in home.rooms %}
