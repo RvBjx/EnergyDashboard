@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
 import requests
 import threading
 import os
+import random
 
 
 app = Flask(__name__)
@@ -28,6 +29,8 @@ class Sensor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     url = db.Column(db.String, nullable=False)
+    data_endpoint = db.Column(db.String, nullable=True) # Optionales Feld für den Endpunkt der Sensordaten
+    relay_endpoint = db.Column(db.String, nullable=True) # Optionales Feld für den Endpunkt zum Schalten des Relais
     room_id = db.Column(db.Integer, db.ForeignKey('room.id'), nullable=False)
     measurements = db.relationship('Measurement', backref='sensor', cascade="all, delete-orphan")
 
@@ -61,7 +64,7 @@ def get_measurement(sensor_id):
     if not sensor:
         print(f"Sensor {sensor_id} not found")
         return
-    response = requests.get(sensor.url)
+    response = requests.get(sensor.url + sensor.data_endpoint)
     if response.status_code != 200:
         print(f"Failed to get sensor data: {response.status_code}")
         return
@@ -90,6 +93,15 @@ def get_measurements():
         if measurement:
             print(f"Sensor: {sensor.name}, Measurement: {measurement.timestamp}, Values: {[value.value for value in measurement.values]}")
 
+def toggle_relay(sensor, new_state):
+    try:
+        response = requests.get(sensor.url + sensor.relay_endpoint + 1 if new_state == "on" else 0)
+        if response.status_code == 200:
+            print(f"Successfully set relay to {new_state} for sensor {sensor.name}")
+        else:
+            print(f"Failed to set relay for sensor {sensor.name}: {response.status_code}")
+    except Exception as e:
+        print(f"Error toggling relay for sensor {sensor.name}: {e}")
 
 @app.route('/')
 def index():
@@ -138,7 +150,9 @@ def add_sensor(room_id):
     if request.method == 'POST':
         name = request.form['name']
         url = request.form['url']
-        db.session.add(Sensor(name=name, url=url, room_id=room_id))
+        data_endpoint = request.form.get('data_endpoint')
+        relay_endpoint = request.form.get('relay_endpoint')
+        db.session.add(Sensor(name=name, url=url, data_endpoint=data_endpoint, relay_endpoint=relay_endpoint, room_id=room_id))
         db.session.commit()
         return redirect(url_for('settings'))
     return render_template('add_sensor.html', room_id=room_id)
@@ -165,6 +179,42 @@ def sensor_detail(sensor_id):
             values.append(mv.value) 
     
     return render_template('sensor_detail.html', sensor=sensor, measurements=measurements, values=values, property_name=property_name)
+
+@app.route("/test")
+def test():
+
+    power = round(random.uniform(10, 20), 2)
+    Ws = round(random.uniform(5, 15), 2)
+    relay = random.choice([True, False])
+    temperature = round(random.uniform(20, 30), 2)
+    return jsonify({
+        "power": power,
+        "Ws": Ws,
+        "relay": relay,
+        "temperature": temperature,
+    })
+
+@app.route('/sensor/<int:sensor_id>/toggle', methods=['POST'])
+def toggle_sensor_relay(sensor_id):
+    sensor = Sensor.query.get_or_404(sensor_id)
+    new_state = request.form.get("state")  # "on" or "off"
+
+    if not sensor.relay_endpoint:
+        return f"Sensor {sensor.name} has no relay endpoint configured.", 400
+
+    state_num = "1" if new_state == "on" else "0"
+    url = f"{sensor.url}{sensor.relay_endpoint}{state_num}"
+
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            print(f"Relay set to {new_state.upper()} for {sensor.name}")
+        else:
+            print(f"Failed to set relay: {response.status_code} {response.text}")
+    except Exception as e:
+        print(f"Error toggling relay for {sensor.name}: {e}")
+    get_measurement(sensor.id)  
+    return redirect(url_for("sensor_detail", sensor_id=sensor.id))
 
 
 if __name__ == '__main__':

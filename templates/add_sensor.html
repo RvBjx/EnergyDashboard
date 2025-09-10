@@ -8,7 +8,9 @@
   </div>
   <div class="mb-3">
     <label class="form-label">Sensor URL</label>
-    <input type="url" class="form-control" name="url" required placeholder="http://192.168.0.10/data">
+    <input type="url" class="form-control" name="url" required placeholder="http://192.168.0.10">
+    <input type="text" class="form-control" name="data_endpoint" required placeholder="/data">
+    <input type="text" class="form-control" name="relay_endpoint" required placeholder="/relay?state=">
   </div>
   <input type="hidden" name="room_id" value="{{ room_id }}">
   <button type="submit" class="btn btn-primary">Add Sensor</button>

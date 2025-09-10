@@ -2,8 +2,29 @@
 {% block body %}
 <h2>Sensor: {{ sensor.name }}</h2>
 <p><strong>URL:</strong> {{ sensor.url }}</p>
-<p><strong>Room:</strong> {{ sensor.room.name }}</p>
+<p><strong>Data:</strong> {{ sensor.data_endpoint }}</p>
+<p><strong>Relay:</strong> {{ sensor.relay_endpoint }}</p>
 <p><strong>Home:</strong> {{ sensor.room.home.name }}</p>
+<p><strong>Room:</strong> {{ sensor.room.name }}</p>
+
+<form method="post" action="{{ url_for('toggle_sensor_relay', sensor_id=sensor.id) }}" class="mt-3">
+    {% set last_measurement = sensor.measurements[-1] if sensor.measurements else None %}
+    {% set relay_value = (last_measurement.values | selectattr("measurement_type.name", "equalto", "relay") | list | last).value if last_measurement else None %}
+
+    {% if relay_value is not none %}
+        {% if relay_value %}
+            <p>Relay is currently: <strong class="text-success">ON</strong></p>
+            <button name="state" value="off" class="btn btn-danger">Turn OFF Relay</button>
+        {% else %}
+            <p>Relay is currently: <strong class="text-danger">OFF</strong></p>
+            <button name="state" value="on" class="btn btn-success">Turn ON Relay</button>
+        {% endif %}
+    {% else %}
+        <p class="text-muted">No relay measurement available yet.</p>
+        <button name="state" value="on" class="btn btn-success">Turn ON Relay</button>
+        <button name="state" value="off" class="btn btn-danger">Turn OFF Relay</button>
+    {% endif %}
+</form>
 
 <h3>Graph of {{ property_name }}</h3>
 
